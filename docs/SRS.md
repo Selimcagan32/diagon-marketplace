@@ -64,6 +64,7 @@ Kullanıcı rolleri (misafir, müşteri, satıcı, admin) bölüm 2.2'de tanıml
 | Kabul kriteri | Acceptance criterion | Bir gereksinimin karşılandığını gösteren, test edilebilir koşul. |
 | Komisyon | Commission | Platformun her satıştan satıcıdan aldığı pay. |
 | Ödeme simülatörü | Payment simulator | Gerçek para hareketi olmadan, kart numarasına göre başarılı veya başarısız sonuç dönen ödeme sağlayıcısı. |
+| Satıştaki ürün | Listed product | Listelemede görünen ve satın alınabilen ürün. Koşulları FR-CATALOG-08'de tanımlanır. |
 | Sepet birleştirme | Cart merge | Misafirken oluşturulan sepetin, giriş yapıldığında kullanıcının hesabındaki sepetle tek sepette toplanması. |
 | Sipariş kalemi | Order item | Siparişteki tek bir varyant ve adedi. Sipariş anındaki fiyatı ve ürün bilgisini saklar. |
 | Stok rezervasyonu | Stock reservation | Sipariş verildiğinde stoğun belirli bir süre ayrılması. Ödeme gelirse kesinleşir, süre dolarsa serbest bırakılır. |
@@ -168,7 +169,8 @@ Tablolar her kullanıcı türünün yapabileceği her şeyi gösterir. Roller bi
 | --- | --- | --- | --- | --- |
 | Ürünleri arar, listeler ve inceler | ✓ | ✓ | ✓ | ✓ |
 | Ürün, varyant ve görsel ekler, düzenler | ✗ | ✗ | Kendi | ✗ |
-| Kategori ağacını yönetir | ✗ | ✗ | ✗ | ✓ |
+| Kategori ağacını ve kategori özelliklerini yönetir | ✗ | ✗ | ✗ | ✓ |
+| Uygunsuz ürünü satıştan kaldırır | ✗ | ✗ | ✗ | ✓ |
 
 #### stock – Stok
 
@@ -254,17 +256,314 @@ Sistem, 2.1'de listelenen dış sistemlere bağımlıdır. Bu sistemlerin test o
 
 Her gereksinim `FR-<MODÜL>-<NO>` biçiminde bir kimlik taşır (örneğin `FR-CART-03`). Modül adları koddaki paket adlarıyla aynıdır. Bir gereksinim silinirse kimliği başka bir gereksinime verilmez, gereksinim "(kaldırıldı)" olarak işaretlenir.
 
+Her gereksinim aşağıdaki kalıpla yazılır:
+
+#### FR-<MODÜL>-<NO> Kısa başlık
+
+Sistem, <kim> için <ne> yapmalıdır.
+
+- **Öncelik:** Çekirdek veya Ertelenebilir
+- **Kabul kriterleri:**
+  1. <Koşul ve beklenen sonuç>
+  2. <Hata durumu ve beklenen sonuç>
+
+| Öncelik | Anlamı |
+| --- | --- |
+| Çekirdek | Faz 1'in tamamlanma kriteri için gereklidir. Ertelenmez. |
+| Ertelenebilir | Süre yetmezse sonraki faza ertelenir. Ertelenen gereksinim bu dokümanda "(Faz 2'ye ertelendi)" olarak işaretlenir. |
+
+Yazım kuralları:
+
+- Her gereksinim tek bir şey ister. İki ayrı iş tek gereksinimde birleştirilmez.
+- Gereksinim sistemin ne yapacağını söyler, nasıl yapacağını söylemez. Teknoloji ve araç adı geçmez.
+- Kabul kriterleri gözlenebilir bir sonuç tanımlar. "Hızlı", "kolay", "kullanıcı dostu" gibi ölçülemeyen ifadeler kullanılmaz.
+- Kabul kriterleri başarılı durumun yanında en az bir hata durumunu da içerir.
+
 ### 3.1 identity – Kimlik
 
-_Henüz yazılmadı._
+Bu bölüm kayıt, giriş ve hesap bilgilerini kapsar. Şifre sıfırlama ve e-posta doğrulama e-posta servisine bağlı olduğu için Faz 2'dedir.
+
+#### FR-IDENTITY-01 Kayıt olma
+
+Sistem, misafirin ad, soyad, e-posta adresi ve şifreyle hesap oluşturmasına izin vermelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Geçerli bilgilerle kayıt olan kullanıcının hesabı oluşturulur ve hesaba müşteri rolü verilir.
+  2. Sistemde kayıtlı bir e-posta adresiyle kayıt olunmak istendiğinde kayıt reddedilir.
+  3. Şifre kurallarına (bkz. NFR-SEC) uymayan şifreyle kayıt reddedilir ve kullanıcıya uymadığı kural gösterilir.
+
+#### FR-IDENTITY-02 Giriş yapma
+
+Sistem, kayıtlı kullanıcının e-posta adresi ve şifresiyle giriş yapmasını sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Doğru bilgilerle giriş yapan kullanıcı, rolüne uygun sayfalara erişir.
+  2. Yanlış bilgilerle giriş reddedilir. Hata mesajı, e-posta adresinin mi şifrenin mi yanlış olduğunu belirtmez.
+
+#### FR-IDENTITY-03 Çıkış yapma
+
+Sistem, giriş yapmış kullanıcının oturumunu sonlandırmasını sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Çıkış yapan kullanıcı misafir olarak siteyi kullanmaya devam eder.
+  2. Çıkıştan sonra giriş gerektiren bir sayfa açılmak istendiğinde kullanıcı giriş sayfasına yönlendirilir.
+
+#### FR-IDENTITY-04 İki adımlı doğrulamayı yönetme
+
+Sistem, kullanıcının hesabında iki adımlı doğrulamayı açıp kapatabilmesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. İki adımlı doğrulamayı açan kullanıcı hesabına bir doğrulama uygulaması bağlar. Sonraki girişlerinde şifreden sonra uygulamanın ürettiği tek kullanımlık kod istenir.
+  2. Yanlış veya süresi geçmiş kod girildiğinde giriş reddedilir.
+  3. Müşteri iki adımlı doğrulamayı kapatabilir. Satıcı ve admin kapatamaz (bkz. FR-IDENTITY-05).
+
+#### FR-IDENTITY-05 Satıcı ve admin için zorunlu iki adımlı doğrulama
+
+Sistem, satıcı ve admin rolündeki kullanıcıların iki adımlı doğrulama kullanmasını zorunlu tutmalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. İki adımlı doğrulaması kapalı bir kullanıcı satıcı rolü aldığında, sonraki girişinde doğrulamayı kurmadan devam edemez.
+  2. Admin hesabı, iki adımlı doğrulama kurulmadan kullanılamaz.
+
+#### FR-IDENTITY-06 Profil bilgilerini yönetme
+
+Sistem, kullanıcının kendi profil bilgilerini görüntüleyip düzenlemesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Kullanıcı ad ve soyadını değiştirip kaydettiğinde yeni bilgiler profilinde görünür.
+  2. Ad veya soyad boşsa ya da 50 karakterden uzunsa kayıt reddedilir ve hatalı alan gösterilir.
+  3. E-posta adresi profil sayfasından değiştirilemez.
+  4. Kullanıcı başka bir kullanıcının profilini görüntüleyemez ve düzenleyemez.
+
+#### FR-IDENTITY-07 Adres yönetme
+
+Sistem, müşteri ve satıcının teslimat adreslerini ekleyip düzenlemesini ve silmesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Bir adres şu alanlardan oluşur: adres başlığı (örneğin "Ev"), alıcının adı ve soyadı, alıcının cep telefonu, il, ilçe ve açık adres. Hepsi zorunludur.
+  2. Eksik alanla kaydedilmek istenen adres reddedilir ve eksik alan gösterilir.
+  3. Cep telefonu Türkiye cep telefonu biçiminde değilse (5XX XXX XX XX) adres reddedilir.
+  4. İl, 81 ilin listesinden seçilir.
+  5. Kullanıcı en fazla 10 adres kaydedebilir. 11. adres reddedilir.
+  6. Adresin düzenlenmesi veya silinmesi, o adrese daha önce verilmiş siparişlerin teslimat bilgisini değiştirmez (bkz. 3.6).
+  7. Kullanıcı başka bir kullanıcının adreslerine erişemez.
+
+#### FR-IDENTITY-08 Varsayılan adres
+
+Sistem, kullanıcının adreslerinden birini varsayılan olarak işaretlemesini sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Kullanıcının ilk eklediği adres otomatik olarak varsayılan olur.
+  2. Bir kullanıcının aynı anda yalnızca bir
+
+  
 
 ### 3.2 seller – Satıcı
 
-_Henüz yazılmadı._
+Bu bölüm satıcı başvurusunu ve mağaza profilini kapsar. Başvurunun onaylanması ve reddedilmesi admin işlemi olduğu için 3.8'dedir. Satış raporları ve hakediş Faz 2'dedir.
+
+#### FR-SELLER-01 Satıcı başvurusu yapma
+
+Sistem, müşterinin satıcı olmak için başvuru yapmasını sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Başvuru mağaza adı, mağaza açıklaması ve iletişim telefonundan oluşur. Hepsi zorunludur.
+  2. Mağaza adı 3–50, mağaza açıklaması en fazla 1000 karakterdir. Telefon biçimi FR-IDENTITY-07 ile aynıdır.
+  3. Mağaza adı büyük-küçük harf farkı gözetmeden benzersizdir. Var olan bir mağazanın ya da bekleyen bir başvurunun adıyla yapılan başvuru reddedilir.
+  4. Yeni başvuru "Beklemede" durumunda oluşur.
+  5. Bekleyen başvurusu olan kullanıcı yeni başvuru yapamaz.
+  6. Satıcı ve admin başvuru yapamaz.
+
+#### FR-SELLER-02 Başvuru durumunu takip etme
+
+Sistem, başvuru yapan kullanıcının başvurusunun durumunu görmesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Kullanıcı başvurusunu "Beklemede", "Onaylandı" veya "Reddedildi" durumuyla görür.
+  2. Reddedilen başvuruda admin'in yazdığı red gerekçesi gösterilir.
+  3. Başvurusu reddedilen kullanıcı yeni başvuru yapabilir.
+  4. Kullanıcı başka bir kullanıcının başvurusunu göremez.
+
+#### FR-SELLER-03 Mağaza sayfasını görüntüleme
+
+Sistem, herkesin bir satıcının mağaza sayfasını görüntülemesini sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Mağaza sayfasında mağaza adı, mağaza açıklaması ve mağazanın satıştaki ürünleri gösterilir. Ürünler 3.3'teki listeleme kurallarıyla listelenir.
+  2. Mağaza sayfası misafir dahil herkese açıktır.
+  3. İletişim telefonu mağaza sayfasında gösterilmez.
+  4. Var olmayan bir mağaza açılmak istendiğinde "bulunamadı" sayfası gösterilir.
+
+#### FR-SELLER-04 Mağaza profilini düzenleme
+
+Sistem, satıcının kendi mağazasının açıklamasını ve iletişim telefonunu düzenlemesini sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Satıcının kaydettiği yeni açıklama mağaza sayfasında görünür. Açıklama ve telefon FR-SELLER-01'deki kurallara uymazsa kayıt reddedilir.
+  2. Mağaza adı değiştirilemez.
+  3. Satıcı başka bir satıcının mağaza profilini düzenleyemez.
 
 ### 3.3 catalog – Katalog
 
-_Henüz yazılmadı._
+Bu bölüm kategori ağacını, ürün ve varyant yönetimini, ürün listeleme ve incelemeyi kapsar. Yazım hatasına toleranslı arama, otomatik tamamlama ve filtre panelindeki sonuç sayıları Faz 3'tedir.
+
+#### FR-CATALOG-01 Kategori ağacını yönetme
+
+Sistem, admin'in kategori ağacını oluşturup düzenlemesini sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Admin kategori ekler, kategorinin adını değiştirir ve kategoriyi başka bir kategorinin altına taşır.
+  2. Kategori ağacı en fazla 3 seviyedir (örneğin Elektronik > Telefon > Akıllı telefon).
+  3. Aynı üst kategorinin altında, büyük-küçük harf farkı gözetmeden aynı adlı iki kategori olamaz.
+  4. Ürün yalnızca alt kategorisi olmayan kategorilere eklenir. Ürünü bulunan bir kategoriye alt kategori eklenemez.
+  5. İçinde ürün veya alt kategori bulunan kategori silinemez.
+  6. Bir kategori kendi alt kategorilerinden birinin altına taşınamaz.
+
+#### FR-CATALOG-02 Kategoriye özel özellikleri tanımlama
+
+Sistem, admin'in her kategori için ürünlerde girilecek özellikleri tanımlamasını sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Bir özellik ad, tür ve zorunluluk bilgisinden oluşur. Türler: metin, sayı (isteğe bağlı birimle, örneğin "GB"), evet/hayır ve listeden seçim (örneğin Renk: Siyah, Beyaz).
+  2. Listeden seçim türündeki bir özellik "varyant özelliği" olarak işaretlenebilir. Bir ürünün varyantları bu özelliklerin değerleriyle birbirinden ayrılır (örneğin Beden ve Renk).
+  3. Bir kategoride tanımlanan özellik, o kategorinin bütün alt kategorilerinde de geçerlidir (örneğin Elektronik'teki "Marka", Akıllı telefon'da da istenir).
+  4. Ürünü bulunan bir kategoriye zorunlu özellik doğrudan eklenemez. Özellik isteğe bağlı olarak eklenir, gerekirse FR-CATALOG-03'teki geçiş süresiyle zorunlu yapılır.
+  5. Değer girilmiş ürünü olan bir özelliğin türü değiştirilemez.
+
+#### FR-CATALOG-03 İsteğe bağlı özelliği zorunlu yapma
+
+Sistem, admin'in isteğe bağlı bir özelliği, satıcılara geçiş süresi tanıyarak zorunlu yapmasını sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Admin isteğe bağlı bir özelliği istediği zaman zorunlu yapabilir. Bunu yaparken gün olarak bir geçiş süresi belirler. Süre 0 veya daha büyük bir tam sayıdır. 0 girilirse özelliği boş olan ürünler hemen satıştan kalkar.
+  2. 7 günden kısa veya 60 günden uzun bir süre girildiğinde admin, satıştan kalkacak ürün sayısıyla birlikte uyarılır. Admin onaylarsa süre kaydedilir.
+  3. Geçiş süresi başladıktan sonra eklenen veya düzenlenen ürünlerde özellik hemen zorunludur.
+  4. Geçiş süresi boyunca özelliği boş olan ürünler satışta kalır. Satıcı panelinde bu ürünler, eksik özellik ve sürenin bitiş tarihiyle birlikte gösterilir.
+  5. Süre dolduğunda özelliği hâlâ boş olan ürünler satıştan kalkar: listelemede görünmez ve satın alınamaz. Ürün silinmez.
+  6. Satıcı eksik özelliği doldurduğunda ürün yeniden satışa açılır.
+  7. Ürünün satıştan kalkması, daha önce verilmiş siparişleri etkilemez.
+
+#### FR-CATALOG-04 Ürün ekleme ve düzenleme
+
+Sistem, satıcının kendi mağazasına ürün eklemesini ve ürünlerini düzenlemesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Ürün ad, açıklama, kategori ve kategorinin özelliklerinden oluşur. Ad 3–150 karakterdir. Açıklama en fazla 5000 karakterlik düz metindir.
+  2. Ürün yalnızca alt kategorisi olmayan bir kategoriye eklenir (bkz. FR-CATALOG-01).
+  3. Kategorinin zorunlu özellikleri doldurulmadan ürün kaydedilmez. Özellik değeri türüne uymazsa (örneğin sayı alanına metin) kayıt reddedilir.
+  4. Ürünün kategorisi ürün eklendikten sonra değiştirilemez.
+  5. Satıcı kendi ürününü satıştan kaldırabilir ve yeniden satışa açabilir.
+  6. Satıcı başka bir satıcının ürününü düzenleyemez.
+
+#### FR-CATALOG-05 Varyant yönetme
+
+Sistem, satıcının kendi ürünlerine varyant eklemesini ve varyantları düzenlemesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Bir varyant, kategorinin varyant özelliklerinin değerlerinden (örneğin Beden: M, Renk: Siyah) ve fiyattan oluşur. Stok 3.4'te tanımlanır.
+  2. Kategoride varyant özelliği yoksa ürünün tek bir varyantı olur (örneğin bir kitap).
+  3. Aynı ürünün iki varyantı aynı özellik değerlerine sahip olamaz.
+  4. Fiyat Türk lirası cinsinden, KDV dahil, 0'dan büyük ve en fazla iki ondalık basamaklıdır.
+  5. Ürün en az bir varyantı olmadan satışa açılamaz.
+  6. Siparişi bulunan bir varyant silinemez, satıştan kaldırılır.
+  7. Fiyat değişikliği önceden verilmiş siparişleri etkilemez (bkz. 3.6).
+
+#### FR-CATALOG-06 Ürün görsellerini yönetme
+
+Sistem, satıcının kendi ürünlerine görsel yüklemesini, görselleri sıralamasını ve silmesini sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Görsel JPEG, PNG veya WebP biçiminde ve en fazla 5 MB'tır. Bir ürünün en fazla 8 görseli olur.
+  2. Bu kurallara uymayan görsel reddedilir ve kullanıcıya sebebi gösterilir.
+  3. Satıcı görsellerin sırasını belirler. İlk görsel ürün listelerinde gösterilir.
+  4. Görseli olmayan ürünlerde varsayılan bir yer tutucu görsel gösterilir.
+
+#### FR-CATALOG-07 Uygunsuz ürünü satıştan kaldırma
+
+Sistem, admin'in uygunsuz bir ürünü gerekçe yazarak satıştan kaldırmasını sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Admin ürünü satıştan kaldırır, ürünün içeriğini düzenleyemez. Gerekçe zorunludur.
+  2. Satıcı kaldırılan ürünü ve gerekçesini panelinde görür.
+  3. Admin tarafından kaldırılan ürünü yalnızca admin yeniden satışa açabilir.
+  4. Ürünün satıştan kalkması, önceden verilmiş siparişleri etkilemez.
+
+#### FR-CATALOG-08 Ürünleri listeleme
+
+Sistem, herkesin ürünleri kategoriye göre listelemesini ve sıralamasını sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Yalnızca satıştaki ürünler listelenir. Bir ürün şu koşulların hepsini sağlıyorsa satıştadır: satıcısı ürünü satışa açmıştır, admin kaldırmamıştır, zorunlu özellik eksikliği yüzünden satıştan kalkmamıştır ve satıştaki en az bir varyantı vardır.
+  2. Bir kategori seçildiğinde o kategorinin ve bütün alt kategorilerinin ürünleri listelenir.
+  3. Her üründe ilk görsel, ürün adı, mağaza adı ve satıştaki varyantların en düşük fiyatı gösterilir. Varyantların fiyatları farklıysa fiyat "…'den başlayan" ifadesiyle gösterilir.
+  4. Satıştaki hiçbir varyantında stok olmayan ürün listede "Tükendi" etiketiyle gösterilir.
+  5. Ürünler en yeniye (varsayılan), fiyata göre artan ve fiyata göre azalan sırayla sıralanabilir.
+  6. Sayfa başına 24 ürün gösterilir.
+  7. Seçili kategori, sıralama ve sayfa adres çubuğunda tutulur. Adres paylaşıldığında aynı liste açılır.
+
+#### FR-CATALOG-09 Ürünleri filtreleme
+
+Sistem, listelenen ürünlerin özelliklere, fiyata ve stok durumuna göre filtrelenmesini sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Liste, kategorinin listeden seçim ve evet/hayır türündeki özelliklerine göre filtrelenir.
+  2. Aynı özellikte birden fazla değer seçildiğinde ürünün bunlardan birine uyması yeterlidir. Farklı özellikler seçildiğinde ürün hepsine uymalıdır (örneğin Marka: Samsung veya Apple, ve Renk: Siyah).
+  3. Varyant özelliğine göre filtrelemede, ürünün satıştaki en az bir varyantı uyuyorsa ürün listelenir.
+  4. Fiyat aralığı seçildiğinde, satıştaki en az bir varyantının fiyatı aralıktaysa ürün listelenir.
+  5. "Sadece stokta olanlar" seçeneği tükenmiş ürünleri gizler.
+  6. Filtrelere uyan ürün yoksa "Ürün bulunamadı" mesajı ve filtreleri temizleme seçeneği gösterilir.
+  7. Seçili filtreler adres çubuğunda tutulur.
+
+#### FR-CATALOG-10 Ürün arama
+
+Sistem, herkesin ürünleri adlarına göre aramasını sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Arama metni en az 2 karakterdir ve ürün adında aranır.
+  2. Arama büyük-küçük harf farkı gözetmez ve Türkçe harfleri doğru eşleştirir ("IŞIK" araması "ışık" geçen ürünü, "istanbul" araması "İstanbul" geçen ürünü bulur).
+  3. Birden fazla kelime girildiğinde, bütün kelimeleri herhangi bir sırayla içeren ürünler bulunur ("siyah tişört" araması "Basic Tişört Siyah" ürününü bulur).
+  4. Kelime ekleri ve yazım hataları dikkate alınmaz ("telefonlar" araması "Telefon" adlı ürünü bulmaz). Bu yetenek Faz 3'tedir.
+  5. Sonuçlar FR-CATALOG-08'in kurallarıyla listelenir ve FR-CATALOG-09'un filtreleriyle daraltılabilir.
+  6. Sonuç yoksa "… için sonuç bulunamadı" mesajı gösterilir.
+  7. Arama metni adres çubuğunda tutulur.
+
+#### FR-CATALOG-11 Ürün detayını inceleme
+
+Sistem, herkesin bir ürünün detay sayfasını görüntülemesini ve varyant seçmesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Detay sayfasında ürün adı, açıklaması, görselleri, kategori yolu (örneğin Elektronik > Telefon > Akıllı telefon), özellikleri ve mağaza adı gösterilir.
+  2. Kullanıcı varyant özelliklerini seçtiğinde o varyantın fiyatı ve stok durumu ("Stokta" veya "Tükendi") gösterilir.
+  3. Satışta olmayan varyantlar ve var olmayan özellik kombinasyonları seçilemez.
+  4. Açıklama düz metin olarak, satır sonları korunarak gösterilir.
+  5. Satıcının kaldırdığı veya zorunlu özellik eksikliği yüzünden satıştan kalkan ürünün sayfası açılır, "Bu ürün satışta değil" uyarısı gösterilir ve ürün sepete eklenemez.
+  6. Admin'in kaldırdığı veya hiç var olmamış bir ürün açılmak istendiğinde "bulunamadı" sayfası gösterilir.
+  7. Mağaza adı, mağaza sayfasına bağlantı verir (FR-SELLER-03 ertelenirse bağlantı olmaz).
+
+
 
 ### 3.4 stock – Stok
 
@@ -288,7 +587,7 @@ _Henüz yazılmadı._
 
 ## 4. Fonksiyonel olmayan gereksinimler
 
-Her gereksinim `NFR-<KATEGORİ>-<NO>` biçiminde bir kimlik taşır (örneğin `NFR-PERF-01`). Kimlik kuralları bölüm 3 ile aynıdır.
+Her gereksinim `NFR-<KATEGORİ>-<NO>` biçiminde bir kimlik taşır (örneğin `NFR-PERF-01`). Kimlik ve yazım kuralları bölüm 3 ile aynıdır.
 
 ### 4.1 PERF – Performans
 
