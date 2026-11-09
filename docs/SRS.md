@@ -89,10 +89,10 @@ Kullanıcı rolleri (misafir, müşteri, satıcı, admin) bölüm 2.2'de tanıml
 
 | Doküman | Konum |
 | --- | --- |
-| Yol haritası | [README.md](../README.md) |
-| Teknik tasarım dokümanı (SDD) | [docs/SDD.md](SDD.md) |
-| Mimari karar kayıtları (ADR) | [docs/adr/](adr/) |
-| Mimari şema | [docs/architecture.drawio](architecture.drawio) |
+| Yol haritası | [README.md](../README.md) (içerik Hafta 2'de eklenecek) |
+| Teknik tasarım dokümanı (SDD) | [docs/SDD.md](SDD.md) (Hafta 2'de eklenecek) |
+| Mimari karar kayıtları (ADR) | [docs/adr/](adr/) (Hafta 1'de eklenecek) |
+| Mimari şema | [docs/mimari-sema.png](mimari-sema.png) |
 
 **Standartlar ve yasal düzenlemeler**
 
@@ -189,10 +189,11 @@ Tablolar her kullanıcı türünün yapabileceği her şeyi gösterir. Roller bi
 | İşlem | Misafir | Müşteri | Satıcı | Admin |
 | --- | --- | --- | --- | --- |
 | Sipariş verir | ✗ | ✓ | ✓¹ | ✗ |
-| Siparişlerini görüntüler ve takip eder | ✗ | Kendi | Kendi | ✓ |
+| Siparişlerini görüntüler ve takip eder | ✗ | Kendi | Kendi | ✗ |
 | Siparişini iptal eder (Faz 2) | ✗ | Kendi | Kendi | ✗ |
 | İade talebi oluşturur (Faz 2) | ✗ | Kendi | Kendi | ✗ |
-| Gelen alt siparişleri görüntüler | ✗ | ✗ | Kendi | ✓ |
+| Gelen alt siparişleri görüntüler | ✗ | ✗ | Kendi | ✗ |
+| Bütün siparişleri ve alt siparişleri görüntüler | ✗ | ✗ | ✗ | ✓ |
 | Alt sipariş durumunu günceller | ✗ | ✗ | Kendi | ✗ |
 | İade talebini onaylar veya reddeder (Faz 2) | ✗ | ✗ | Kendi | ✗ |
 
@@ -258,6 +259,7 @@ Her gereksinim `FR-<MODÜL>-<NO>` biçiminde bir kimlik taşır (örneğin `FR-C
 
 Her gereksinim aşağıdaki kalıpla yazılır:
 
+```markdown
 #### FR-<MODÜL>-<NO> Kısa başlık
 
 Sistem, <kim> için <ne> yapmalıdır.
@@ -266,6 +268,7 @@ Sistem, <kim> için <ne> yapmalıdır.
 - **Kabul kriterleri:**
   1. <Koşul ve beklenen sonuç>
   2. <Hata durumu ve beklenen sonuç>
+```
 
 | Öncelik | Anlamı |
 | --- | --- |
@@ -362,9 +365,9 @@ Sistem, kullanıcının adreslerinden birini varsayılan olarak işaretlemesini 
 - **Öncelik:** Ertelenebilir
 - **Kabul kriterleri:**
   1. Kullanıcının ilk eklediği adres otomatik olarak varsayılan olur.
-  2. Bir kullanıcının aynı anda yalnızca bir
-
-  
+  2. Bir kullanıcının aynı anda yalnızca bir varsayılan adresi olur. Yeni bir adres varsayılan yapılınca öncekinin işareti kalkar.
+  3. Varsayılan adres silinirse kalan en eski adres varsayılan olur.
+  4. Ödeme adımında varsayılan adres önceden seçili gelir.
 
 ### 3.2 seller – Satıcı
 
@@ -562,8 +565,6 @@ Sistem, herkesin bir ürünün detay sayfasını görüntülemesini ve varyant s
   5. Satıcının kaldırdığı veya zorunlu özellik eksikliği yüzünden satıştan kalkan ürünün sayfası açılır, "Bu ürün satışta değil" uyarısı gösterilir ve ürün sepete eklenemez.
   6. Admin'in kaldırdığı veya hiç var olmamış bir ürün açılmak istendiğinde "bulunamadı" sayfası gösterilir.
   7. Mağaza adı, mağaza sayfasına bağlantı verir (FR-SELLER-03 ertelenirse bağlantı olmaz).
-
-
 
 ### 3.4 stock – Stok
 
