@@ -63,6 +63,7 @@ Kullanıcı rolleri (misafir, müşteri, satıcı, admin) bölüm 2.2'de tanıml
 | Hakediş (Faz 2) | Payout | Satış tutarından komisyon ve iadeler düşüldükten sonra satıcıya ödenecek tutar. |
 | Kabul kriteri | Acceptance criterion | Bir gereksinimin karşılandığını gösteren, test edilebilir koşul. |
 | Komisyon | Commission | Platformun her satıştan satıcıdan aldığı pay. |
+| Kullanılabilir stok | Available stock | Bir varyantın satın alınabilecek adedi. Hesaplanması FR-STOCK-02'de tanımlanır. |
 | Ödeme simülatörü | Payment simulator | Gerçek para hareketi olmadan, kart numarasına göre başarılı veya başarısız sonuç dönen ödeme sağlayıcısı. |
 | Satıştaki ürün | Listed product | Listelemede görünen ve satın alınabilen ürün. Koşulları FR-CATALOG-08'de tanımlanır. |
 | Sepet birleştirme | Cart merge | Misafirken oluşturulan sepetin, giriş yapıldığında kullanıcının hesabındaki sepetle tek sepette toplanması. |
@@ -267,7 +268,7 @@ Sistem, <kim> için <ne> yapmalıdır.
 - **Öncelik:** Çekirdek veya Ertelenebilir
 - **Kabul kriterleri:**
   1. <Koşul ve beklenen sonuç>
-  2. <Hata durumu ve beklenen sonuç>
+  2. <Hata veya sınır durumu ve beklenen sonuç>
 ```
 
 | Öncelik | Anlamı |
@@ -280,7 +281,7 @@ Yazım kuralları:
 - Her gereksinim tek bir şey ister. İki ayrı iş tek gereksinimde birleştirilmez.
 - Gereksinim sistemin ne yapacağını söyler, nasıl yapacağını söylemez. Teknoloji ve araç adı geçmez.
 - Kabul kriterleri gözlenebilir bir sonuç tanımlar. "Hızlı", "kolay", "kullanıcı dostu" gibi ölçülemeyen ifadeler kullanılmaz.
-- Kabul kriterleri başarılı durumun yanında en az bir hata durumunu da içerir.
+- Kabul kriterleri başarılı durumun yanında en az bir hata veya sınır durumunu da içerir. Hata durumu reddedilen bir girdiyi, sınır durumu ise kuralın uç bir değerde nasıl davrandığını gösterir.
 
 ### 3.1 identity – Kimlik
 
@@ -519,7 +520,7 @@ Sistem, herkesin ürünleri kategoriye göre listelemesini ve sıralamasını sa
   1. Yalnızca satıştaki ürünler listelenir. Bir ürün şu koşulların hepsini sağlıyorsa satıştadır: satıcısı ürünü satışa açmıştır, admin kaldırmamıştır, zorunlu özellik eksikliği yüzünden satıştan kalkmamıştır ve satıştaki en az bir varyantı vardır.
   2. Bir kategori seçildiğinde o kategorinin ve bütün alt kategorilerinin ürünleri listelenir.
   3. Her üründe ilk görsel, ürün adı, mağaza adı ve satıştaki varyantların en düşük fiyatı gösterilir. Varyantların fiyatları farklıysa fiyat "…'den başlayan" ifadesiyle gösterilir.
-  4. Satıştaki hiçbir varyantında stok olmayan ürün listede "Tükendi" etiketiyle gösterilir.
+  4. Satıştaki bütün varyantları "Tükendi" durumunda olan ürün (bkz. FR-STOCK-02) listede "Tükendi" etiketiyle gösterilir.
   5. Ürünler en yeniye (varsayılan), fiyata göre artan ve fiyata göre azalan sırayla sıralanabilir.
   6. Sayfa başına 24 ürün gösterilir.
   7. Seçili kategori, sıralama ve sayfa adres çubuğunda tutulur. Adres paylaşıldığında aynı liste açılır.
@@ -568,7 +569,73 @@ Sistem, herkesin bir ürünün detay sayfasını görüntülemesini ve varyant s
 
 ### 3.4 stock – Stok
 
-_Henüz yazılmadı._
+Bu bölüm varyant stoğunu ve sipariş sırasında stoğun ayrılmasını kapsar. Rezervasyonu sipariş başlatır (bkz. 3.6), ödeme sonucu kesinleştirir veya serbest bırakır (bkz. 3.7). İade ile stoğun geri eklenmesi Faz 2'dedir.
+
+#### FR-STOCK-01 Stok miktarını güncelleme
+
+Sistem, satıcının kendi varyantlarının stok miktarını güncellemesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Satıcı stok miktarını kesin bir sayı olarak girer (örneğin 50). Girilen sayı önceki miktarın yerine geçer.
+  2. Stok miktarı 0 ile 99.999 arasında bir tam sayıdır. Negatif, ondalıklı veya bu aralığın dışındaki değer reddedilir.
+  3. Varyant eklenirken stok miktarı girilmezse 0 olur.
+  4. Stok miktarı, ödemesi beklenen siparişler için ayrılmış adedin altına düşürülemez. Böyle bir değer reddedilir ve hata mesajında ayrılmış adet gösterilir.
+  5. Satıcı başka bir satıcının varyantının stok miktarını değiştiremez.
+
+#### FR-STOCK-02 Stok durumunu belirleme
+
+Sistem, her varyantın stok durumunu kullanılabilir stoğuna göre belirlemelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Kullanılabilir stok, stok miktarından ödemesi beklenen siparişler için ayrılmış adet çıkarılarak bulunur.
+  2. Kullanılabilir stoğu 0'dan büyük olan varyant "Stokta", 0 olan varyant "Tükendi" durumundadır. FR-CATALOG-08, FR-CATALOG-09 ve FR-CATALOG-11 bu durumu kullanır.
+  3. Müşteriye kullanılabilir stok adedi gösterilmez, yalnızca durum gösterilir.
+  4. Stok miktarı 5 ve ayrılmış adedi 5 olan varyant, satıcının elinde ürün olsa da "Tükendi" durumundadır.
+
+#### FR-STOCK-03 Stok rezervasyonu
+
+Sistem, sipariş oluşturulduğunda siparişteki her varyant için stoğu belirli bir süre ayırmalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Sipariş oluşturulduğunda her kalemin adedi, ilgili varyantın kullanılabilir stoğundan ayrılır.
+  2. Ayrılan adet, siparişin oluşturulduğu andan itibaren 15 dakika boyunca ayrılmış kalır. Süre uzatılamaz.
+  3. Kalemlerden birinin adedi varyantın kullanılabilir stoğundan fazlaysa sipariş oluşturulmaz ve hiçbir kalem için stok ayrılmaz. Kullanıcıya stoğu yetmeyen ürün gösterilir, kullanılabilir adet gösterilmez.
+  4. Kullanılabilir stoğu 2 olan bir varyanttan 3 adet içeren sipariş reddedilir. Reddedildikten sonra varyantın kullanılabilir stoğu 2 olarak kalır.
+
+#### FR-STOCK-04 Rezervasyonun kesinleşmesi
+
+Sistem, ödemesi başarılı olan siparişin ayrılmış stoğunu kesinleştirmelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Ödeme başarılı olduğunda her kalemin ayrılmış adedi, varyantın stok miktarından düşülür ve rezervasyon kapanır. Kullanılabilir stok değişmez.
+  2. Stok miktarı 10 ve ayrılmış adedi 3 olan varyantta 3 adetlik sipariş ödenince stok miktarı 7, ayrılmış adet 0 olur. Kullanılabilir stok önce de sonra da 7'dir.
+  3. Aynı siparişin başarılı ödeme sonucu ikinci kez işlenirse stok ikinci kez düşülmez.
+
+#### FR-STOCK-05 Rezervasyonun serbest bırakılması
+
+Sistem, süresi dolan rezervasyonun ayrılmış stoğunu serbest bırakmalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Süresi dolan rezervasyonun ayrılmış adedi, süre dolduktan sonra en geç 1 dakika içinde serbest bırakılır ve kullanılabilir stok o kadar artar. Sipariş iptal edilir (bkz. 3.6).
+  2. Başarısız ödeme rezervasyonu serbest bırakmaz. Müşteri süre dolana kadar aynı siparişi tekrar ödemeyi deneyebilir (bkz. 3.7).
+  3. Süresi dolmuş bir siparişin ödemesi, stok henüz serbest bırakılmamış olsa bile alınmaz.
+  4. Bir rezervasyon yalnızca bir kez serbest bırakılır. Serbest bırakılmış veya kesinleşmiş bir rezervasyon tekrar serbest bırakılmaz, stok iki kez geri eklenmez.
+
+#### FR-STOCK-06 Fazla satışın önlenmesi
+
+Sistem, aynı varyant için aynı anda gelen işlemlerde kullanılabilir stoktan fazlasının ayrılmasını engellemelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Kullanılabilir stok hiçbir koşulda 0'ın altına düşmez.
+  2. Kullanılabilir stoğu 1 olan bir varyant için aynı anda gelen 2 siparişten yalnızca biri oluşturulur. Diğeri FR-STOCK-03'teki gibi reddedilir.
+  3. Kullanılabilir stoğu 10 olan bir varyant için aynı anda gelen, 1'er adetlik 100 sipariş isteğinden tam olarak 10'u oluşturulur.
+  4. Satıcının stok güncellemesi ile bir sipariş aynı anda gerçekleştiğinde de stok miktarı, ayrılmış adedin altına düşmez (bkz. FR-STOCK-01).
 
 ### 3.5 cart – Sepet
 
