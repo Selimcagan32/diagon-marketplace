@@ -172,6 +172,7 @@ Tablolar her kullanıcı türünün yapabileceği her şeyi gösterir. Roller bi
 | Ürünleri arar, listeler ve inceler | ✓ | ✓ | ✓ | ✓ |
 | Ürün, varyant ve görsel ekler, düzenler | ✗ | ✗ | Kendi | ✗ |
 | Kategori ağacını ve kategori özelliklerini yönetir | ✗ | ✗ | ✗ | ✓ |
+| Kategorilerin KDV ve komisyon oranlarını belirler | ✗ | ✗ | ✗ | ✓ |
 | Uygunsuz ürünü satıştan kaldırır | ✗ | ✗ | ✗ | ✓ |
 
 #### stock – Stok
@@ -357,7 +358,7 @@ Sistem, müşteri ve satıcının teslimat adreslerini ekleyip düzenlemesini ve
   3. Cep telefonu Türkiye cep telefonu biçiminde değilse (5XX XXX XX XX) adres reddedilir.
   4. İl, 81 ilin listesinden seçilir.
   5. Kullanıcı en fazla 10 adres kaydedebilir. 11. adres reddedilir.
-  6. Adresin düzenlenmesi veya silinmesi, o adrese daha önce verilmiş siparişlerin teslimat bilgisini değiştirmez (bkz. 3.6).
+  6. Adresin düzenlenmesi veya silinmesi, o adrese daha önce verilmiş siparişlerin teslimat bilgisini değiştirmez (bkz. FR-ORDER-07).
   7. Kullanıcı başka bir kullanıcının adreslerine erişemez.
 
 #### FR-IDENTITY-08 Varsayılan adres
@@ -489,7 +490,7 @@ Sistem, satıcının kendi ürünlerine varyant eklemesini ve varyantları düze
   4. Fiyat Türk lirası cinsinden, KDV dahil, 0'dan büyük ve en fazla iki ondalık basamaklıdır.
   5. Ürün en az bir varyantı olmadan satışa açılamaz.
   6. Siparişi bulunan bir varyant silinemez, satıştan kaldırılır.
-  7. Fiyat değişikliği önceden verilmiş siparişleri etkilemez (bkz. 3.6).
+  7. Fiyat değişikliği önceden verilmiş siparişleri etkilemez (bkz. FR-ORDER-07).
 
 #### FR-CATALOG-06 Ürün görsellerini yönetme
 
@@ -569,9 +570,20 @@ Sistem, herkesin bir ürünün detay sayfasını görüntülemesini ve varyant s
   6. Admin'in kaldırdığı veya hiç var olmamış bir ürün açılmak istendiğinde "bulunamadı" sayfası gösterilir.
   7. Mağaza adı, mağaza sayfasına bağlantı verir (FR-SELLER-03 ertelenirse bağlantı olmaz).
 
+#### FR-CATALOG-12 Kategori oranlarını belirleme
+
+Sistem, admin'in her kategori için KDV oranını ve komisyon oranını belirlemesini sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. KDV oranı ve komisyon oranı 0 ile 100 arasında, en fazla iki ondalık basamaklı bir yüzdedir. Bu aralığın dışındaki değer reddedilir.
+  2. En üst seviyedeki kategoriler için iki oran da zorunludur. Oranı girilmeden en üst seviyede kategori kaydedilemez.
+  3. Oranı girilmemiş bir alt kategori, oranı üst kategorisinden devralır. Alt kategoriye girilen oran, devralınan oranın yerine geçer. Elektronik için %20 KDV girilmiş, Akıllı telefon için KDV oranı girilmemişse Akıllı telefon %20 KDV oranını kullanır.
+  4. Oranlardaki değişiklik yalnızca değişiklikten sonra oluşturulan siparişlere uygulanır (bkz. FR-ORDER-08 ve FR-ORDER-09).
+
 ### 3.4 stock – Stok
 
-Bu bölüm varyant stoğunu ve sipariş sırasında stoğun ayrılmasını kapsar. Rezervasyonu sipariş başlatır (bkz. 3.6), ödeme sonucu kesinleştirir veya serbest bırakır (bkz. 3.7). İade ile stoğun geri eklenmesi Faz 2'dedir.
+Bu bölüm varyant stoğunu ve sipariş sırasında stoğun ayrılmasını kapsar. Rezervasyonu sipariş başlatır (bkz. FR-ORDER-02), ödeme sonucu kesinleştirir veya serbest bırakır (bkz. 3.7). İade ile stoğun geri eklenmesi Faz 2'dedir.
 
 #### FR-STOCK-01 Stok miktarını güncelleme
 
@@ -623,7 +635,7 @@ Sistem, süresi dolan rezervasyonun ayrılmış stoğunu serbest bırakmalıdır
 
 - **Öncelik:** Çekirdek
 - **Kabul kriterleri:**
-  1. Süresi dolan rezervasyonun ayrılmış adedi, süre dolduktan sonra en geç 1 dakika içinde serbest bırakılır ve kullanılabilir stok o kadar artar. Sipariş iptal edilir (bkz. 3.6).
+  1. Süresi dolan rezervasyonun ayrılmış adedi, süre dolduktan sonra en geç 1 dakika içinde serbest bırakılır ve kullanılabilir stok o kadar artar. Sipariş iptal edilir (bkz. FR-ORDER-10).
   2. Başarısız ödeme rezervasyonu serbest bırakmaz. Müşteri süre dolana kadar aynı siparişi tekrar ödemeyi deneyebilir (bkz. 3.7).
   3. Süresi dolmuş bir siparişin ödemesi, stok henüz serbest bırakılmamış olsa bile alınmaz.
   4. Bir rezervasyon yalnızca bir kez serbest bırakılır. Serbest bırakılmış veya kesinleşmiş bir rezervasyon tekrar serbest bırakılmaz, stok iki kez geri eklenmez.
@@ -641,7 +653,7 @@ Sistem, aynı varyant için aynı anda gelen işlemlerde kullanılabilir stoktan
 
 ### 3.5 cart – Sepet
 
-Bu bölüm sepete ekleme, sepetin düzenlenmesi, misafir sepeti ve giriş yapınca sepetlerin birleşmesini kapsar. Sepete ürün eklemek stok ayırmaz, stok sipariş oluşturulunca ayrılır (bkz. FR-STOCK-03). Sepette gösterilen fiyat ürünün güncel fiyatıdır, fiyat sipariş anında sabitlenir (bkz. 3.6).
+Bu bölüm sepete ekleme, sepetin düzenlenmesi, misafir sepeti ve giriş yapınca sepetlerin birleşmesini kapsar. Sepete ürün eklemek stok ayırmaz, stok sipariş oluşturulunca ayrılır (bkz. FR-STOCK-03). Sepette gösterilen fiyat ürünün güncel fiyatıdır, fiyat sipariş anında sabitlenir (bkz. FR-ORDER-07).
 
 #### FR-CART-01 Sepete ekleme
 
@@ -728,7 +740,196 @@ Sistem, ödemesi başarılı olan siparişteki kalemleri sepetten çıkarmalıd�
 
 ### 3.6 order – Sipariş
 
-_Henüz yazılmadı._
+Bu bölüm ödeme adımını, siparişin oluşturulmasını ve mağazalara göre bölünmesini, sipariş anındaki bilgilerin saklanmasını, sipariş durumlarını ve siparişlerin görüntülenmesini kapsar. Sipariş, ödeme başlarken oluşturulur ve stoğu ayırır (bkz. FR-STOCK-03). Ödemenin alınması ve sonucunun işlenmesi 3.7'dedir. Faz 1'de kargo ücreti alınmaz. Ödenmiş siparişin iptali, iade ve kargo takibi Faz 2'dedir.
+
+#### FR-ORDER-01 Ödeme adımı
+
+Sistem, müşteri ve satıcının sepetindeki satın alınabilir kalemlerin özetini görmesini ve teslimat adresini seçmesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Ödeme adımına geçmek isteyen misafir giriş sayfasına yönlendirilir. Giriş yaptıktan sonra sepetler birleşir (bkz. FR-CART-05) ve kullanıcı sepet sayfasına döner.
+  2. Özette yalnızca satın alınabilir kalemler (bkz. FR-CART-06) mağazaya göre gruplanarak gösterilir. Her grupta mağaza adı ve grubun tutarı, özetin sonunda siparişin KDV dahil toplam tutarı gösterilir.
+  3. Müşteri kayıtlı adreslerinden birini teslimat adresi olarak seçer. Adres seçilmeden ödeme yapılamaz.
+  4. Müşteri ödeme adımında yeni adres ekleyebilir. Eklenen adres FR-IDENTITY-07'deki kurallara uyar ve adres listesine kaydedilir. 10 kayıtlı adresi olan müşterinin yeni adresi reddedilir.
+  5. Özetin görüntülenmesi sipariş oluşturmaz ve stok ayırmaz.
+
+#### FR-ORDER-02 Sipariş oluşturma
+
+Sistem, müşteri ödeme adımında kart bilgilerini girip ödemeyi başlattığında özetteki kalemlerden sipariş oluşturmalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Sipariş, müşteri kart bilgilerini girip "Öde"ye bastığında oluşturulur, stok ayrılır (bkz. FR-STOCK-03) ve ödeme hemen başlar (bkz. 3.7). Yeni siparişin durumu "Ödeme bekleniyor"dur.
+  2. Her siparişe benzersiz bir sipariş numarası verilir. Müşteri, satıcı ve admin siparişi bu numarayla görür.
+  3. Sipariş oluşturulmadan önce her kalemin fiyatı, satış durumu, stoğu (bkz. FR-CART-06) ve satış sınırı (bkz. FR-CATALOG-04) güncel bilgilere göre tekrar kontrol edilir. Bunlardan biri özette gösterilenden farklıysa sipariş oluşturulmaz, stok ayrılmaz ve müşteriye güncel bilgilerle yeni özet gösterilir.
+  4. Özette 100 TL görünen bir varyantın fiyatı müşteri "Öde"ye basmadan 120 TL olursa sipariş oluşturulmaz ve yeni özette 120 TL gösterilir. Müşteri yeni özette "Öde"ye basarsa sipariş 120 TL ile oluşturulur.
+  5. Yeni özette satın alınamaz hale gelen kalemler FR-CART-06'daki uyarıyla gösterilir ve siparişe dahil edilmez. Satın alınabilir kalem kalmazsa müşteri sepet sayfasına yönlendirilir.
+  6. Satıcının kendi mağazasının ürününü içeren sipariş isteği reddedilir. Admin sipariş oluşturamaz.
+
+#### FR-ORDER-03 Tekrarlanan sipariş isteğinin önlenmesi
+
+Sistem, aynı ödeme adımından tekrar gönderilen sipariş isteği için yeni sipariş oluşturmamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Müşteri "Öde"ye iki kez bastığında veya istek bağlantı hatası yüzünden tekrar gönderildiğinde tek sipariş oluşturulur. Tekrar gelen isteğe ilk oluşturulan sipariş döner.
+  2. Tekrar gelen istek stok ayırmaz. Kullanılabilir stoğu 5 olan bir varyanttan 1 adetlik sipariş isteği iki kez gelirse kullanılabilir stok 4 olur.
+  3. Tekrar gelen istek, önceki ödenmemiş siparişi FR-ORDER-04'teki kurala göre iptal etmez. Tekrar kontrolü, önceki siparişin iptalinden önce yapılır.
+  4. Ödeme adımı yeniden açıldığında gönderilen istek yeni bir istek sayılır.
+  5. Sipariş oluşturulmadan reddedilen bir istekten sonra (örneğin FR-ORDER-02'deki fiyat değişikliğinde) gönderilen istek yeni bir istek sayılır.
+
+#### FR-ORDER-04 Tek ödenmemiş sipariş
+
+Sistem, bir müşterinin aynı anda en fazla bir "Ödeme bekleniyor" durumunda siparişi olmasını sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. "Ödeme bekleniyor" durumunda siparişi olan müşteri sepetten yeni sipariş oluşturursa önceki sipariş "Yeni sipariş oluşturuldu" sebebiyle iptal edilir ve rezervasyonu serbest bırakılır (bkz. FR-STOCK-05).
+  2. Önceki siparişten serbest bırakılan stok yeni sipariş için kullanılabilir. Son adedi önceki siparişte ayrıldığı için kullanılabilir stoğu 0 olan bir varyant, yeni siparişte tekrar alınabilir.
+  3. Yeni sipariş oluşturulamazsa önceki sipariş iptal edilmez ve rezervasyonu korunur.
+  4. Müşteri yeni sipariş oluşturmak yerine önceki siparişi ödemeye devam edebilir. Bu durumda sipariş ve ödeme süresi değişmez (bkz. FR-ORDER-13 ve 3.7).
+  5. Aynı müşteriden farklı sekmelerden aynı anda gelen iki yeni sipariş isteğinden sonra müşterinin en fazla bir "Ödeme bekleniyor" durumunda siparişi olur.
+
+#### FR-ORDER-05 Sipariş sınırı
+
+Sistem, müşterinin kısa sürede çok sayıda sipariş oluşturup ödemeden bırakarak stoğu sürekli ayırmasını engellemelidir.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Son 60 dakika içinde ödenmeden iptal edilmiş 5 siparişi olan müşterinin yeni sipariş isteği reddedilir. Müşteriye ne zaman tekrar sipariş verebileceği gösterilir.
+  2. Yalnızca ödenmeden iptal edilen siparişler ("Ödeme süresi doldu" veya "Yeni sipariş oluşturuldu" sebebiyle) sayılır. Ödenen siparişler ve başarısız ödeme denemeleri sayılmaz.
+  3. Son 60 dakika içinde ödenmeden iptal edilmiş 4 siparişi olan müşterinin yeni siparişi oluşturulur.
+  4. Reddedilen istek, müşterinin "Ödeme bekleniyor" durumundaki siparişini iptal etmez.
+
+#### FR-ORDER-06 Alt siparişlere bölme
+
+Sistem, siparişi kalemlerin ait olduğu mağazalara göre alt siparişlere bölmelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Siparişteki her mağaza için bir alt sipariş oluşturulur. Her kalem kendi mağazasının alt siparişine aittir.
+  2. A mağazasından 2, B mağazasından 1 varyant içeren sipariş 2 alt siparişe bölünür. Tek mağazadan verilen siparişin 1 alt siparişi olur.
+  3. Alt siparişin tutarı kalemlerinin tutarlarının, siparişin toplam tutarı alt siparişlerin tutarlarının toplamıdır.
+  4. Sipariş, alt siparişlerin sayısından bağımsız olarak tek ödemeyle ödenir (bkz. 3.7).
+
+#### FR-ORDER-07 Sipariş anındaki bilgilerin saklanması
+
+Sistem, sipariş anındaki ürün, fiyat ve teslimat adresi bilgilerini siparişte saklamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Her kalemde ürün adı, mağaza adı, varyantın özellik değerleri, birim fiyat, adet, kalem tutarı, KDV oranı ve KDV tutarı saklanır.
+  2. Teslimat adresinin bütün alanları (bkz. FR-IDENTITY-07) siparişte saklanır.
+  3. Sipariş verildikten sonra ürün, varyant veya adres bilgileri değişse ya da silinse de sipariş saklanan bilgileri gösterir. 100 TL'ye verilen siparişte, varyantın fiyatı 120 TL'ye çıktıktan sonra da 100 TL görünür.
+  4. Satıştan kalkan bir ürünün önceki siparişleri görüntülenmeye devam eder.
+
+#### FR-ORDER-08 KDV hesaplama
+
+Sistem, her sipariş kaleminin KDV tutarını ürünün kategorisinin KDV oranına (bkz. FR-CATALOG-12) göre hesaplamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Fiyatlar KDV dahil olduğu için KDV tutarı kalem tutarının içinden hesaplanır. KDV oranı %20 olan 120 TL'lik kalemin KDV tutarı 20 TL'dir.
+  2. KDV tutarı kuruşa yuvarlanır, yarım kuruş ve üstü yukarı yuvarlanır. KDV oranı %20 olan 99,99 TL'lik kalemin KDV tutarı 16,665 TL değil 16,67 TL'dir.
+  3. Alt siparişin ve siparişin KDV tutarı, yuvarlanmış kalem KDV tutarlarının toplamıdır.
+  4. KDV oranı sonradan değişirse önceki siparişlerin KDV tutarı değişmez.
+
+#### FR-ORDER-09 Komisyon hesaplama
+
+Sistem, her sipariş kalemi için platform komisyonunu ürünün kategorisinin komisyon oranına (bkz. FR-CATALOG-12) göre hesaplamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Komisyon, KDV dahil kalem tutarı üzerinden hesaplanır. Komisyon oranı %15 olan 120 TL'lik kalemin komisyonu 18 TL'dir.
+  2. Komisyon tutarı FR-ORDER-08'deki kuralla kuruşa yuvarlanır.
+  3. Komisyon oranı ve tutarı kalemde saklanır. Oran sonradan değişirse önceki siparişlerin komisyonu değişmez.
+  4. Komisyon müşteriye gösterilmez.
+
+#### FR-ORDER-10 Ödeme süresi dolan siparişin iptali
+
+Sistem, ödeme süresi içinde ödenmeyen siparişi iptal etmelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Oluşturulmasından 15 dakika sonra hâlâ "Ödeme bekleniyor" durumunda olan sipariş, en geç 1 dakika içinde "İptal edildi" durumuna geçer ve rezervasyonu serbest bırakılır (bkz. FR-STOCK-05).
+  2. 15 dakika dolmadan ödemesi başarılı olan sipariş iptal edilmez.
+  3. İptal edilen siparişte iptal sebebi gösterilir: "Ödeme süresi doldu" veya "Yeni sipariş oluşturuldu" (bkz. FR-ORDER-04).
+  4. Ödeme süresi dolmuş sipariş, henüz iptal edilmemiş olsa bile ödenemez (bkz. FR-STOCK-05).
+  5. Sipariş iptal edildiğinde sepet değişmez (bkz. FR-CART-07).
+
+#### FR-ORDER-11 Alt sipariş durumları
+
+Sistem, alt siparişin durumunu yalnızca tanımlı geçişlerle değiştirmelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Alt sipariş şu durumlardan birindedir: Ödeme bekleniyor, Ödendi, Hazırlanıyor, Kargoda, Teslim edildi, İptal edildi.
+  2. Geçerli geçişler ve bunları yapan:
+     - Ödeme bekleniyor → Ödendi: ödeme başarılı olunca sistem (bkz. 3.7)
+     - Ödeme bekleniyor → İptal edildi: sistem (bkz. FR-ORDER-04 ve FR-ORDER-10)
+     - Ödendi → Hazırlanıyor, Hazırlanıyor → Kargoda, Kargoda → Teslim edildi: satıcı (bkz. FR-ORDER-15)
+  3. Bu geçişlerin dışındaki her değişiklik reddedilir ve durum değişmez. "Ödendi" durumundaki alt sipariş doğrudan "Kargoda" yapılamaz.
+  4. "Teslim edildi" ve "İptal edildi" son durumlardır. Bu durumlardan başka bir duruma geçilemez.
+  5. Ödeme sonucu siparişin bütün alt siparişlerine birlikte uygulanır: alt siparişler birlikte "Ödendi" veya birlikte "İptal edildi" olur.
+
+#### FR-ORDER-12 Sipariş durumu
+
+Sistem, siparişin durumunu alt siparişlerinin durumlarından belirlemelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Siparişin durumu ayrıca değiştirilmez, her zaman alt siparişlerinin durumlarından belirlenir.
+  2. Bütün alt siparişler aynı durumdaysa sipariş de o durumdadır.
+  3. Alt siparişler farklı durumlardaysa sipariş, en geride olan alt siparişin durumunu alır. Sıra: Ödendi, Hazırlanıyor, Kargoda, Teslim edildi. Alt siparişlerinden biri "Kargoda", diğeri "Hazırlanıyor" olan sipariş "Hazırlanıyor" durumundadır.
+  4. Üç alt siparişinden ikisi "Teslim edildi" olan sipariş "Teslim edildi" durumunda değildir.
+
+#### FR-ORDER-13 Siparişleri görüntüleme
+
+Sistem, müşteri ve satıcının kendi verdiği siparişleri listelemesini ve sipariş detayını görüntülemesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Siparişler en yeni en üstte olacak şekilde listelenir. Her siparişte sipariş numarası, sipariş tarihi, durum ve toplam tutar gösterilir. Sayfa başına 10 sipariş gösterilir.
+  2. Detayda her alt sipariş mağaza adı ve durumuyla, kalemleri FR-ORDER-07'de saklanan bilgilerle gösterilir. Teslimat adresi, toplam tutar ve KDV tutarı da gösterilir.
+  3. "Ödeme bekleniyor" durumundaki siparişte kalan ödeme süresi ve ödemeye devam etme seçeneği gösterilir (bkz. 3.7).
+  4. İptal edilmiş siparişte iptal sebebi gösterilir.
+  5. Kullanıcı başka bir kullanıcının siparişini görüntüleyemez.
+  6. Satıcı burada yalnızca müşteri olarak verdiği siparişleri görür. Mağazasına gelen alt siparişler FR-ORDER-14'tedir.
+
+#### FR-ORDER-14 Gelen alt siparişleri görüntüleme
+
+Sistem, satıcının kendi mağazasına gelen alt siparişleri listelemesini ve detayını görüntülemesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Satıcı yalnızca ödenmiş alt siparişleri görür. "Ödeme bekleniyor" durumundaki ve ödenmeden iptal edilen alt siparişler gösterilmez.
+  2. Alt siparişler en yeni en üstte listelenir ve duruma göre filtrelenebilir. Her alt siparişte sipariş numarası, sipariş tarihi, durum ve alt sipariş tutarı gösterilir. Sayfa başına 20 alt sipariş gösterilir.
+  3. Detayda kalemler, teslimat adresi, alt sipariş tutarı, KDV tutarı ve komisyon tutarı gösterilir.
+  4. Satıcı aynı siparişin başka mağazalara ait alt siparişlerini ve müşterinin e-posta adresini göremez.
+  5. Satıcı başka bir mağazanın alt siparişini görüntüleyemez.
+
+#### FR-ORDER-15 Alt sipariş durumunu güncelleme
+
+Sistem, satıcının kendi alt siparişlerinin durumunu bir sonraki duruma ilerletmesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Satıcı alt siparişi her seferinde bir adım ilerletir: Ödendi → Hazırlanıyor → Kargoda → Teslim edildi (bkz. FR-ORDER-11).
+  2. Satıcı alt siparişi geri alamaz ve adım atlayamaz. Böyle bir istek reddedilir ve durum değişmez.
+  3. "Hazırlanıyor" durumundaki alt sipariş için ikinci kez "Hazırlanıyor" isteği gelirse istek reddedilir ve durum değişmez.
+  4. Satıcı başka bir mağazanın alt siparişinin durumunu değiştiremez.
+
+#### FR-ORDER-16 Bütün siparişleri görüntüleme
+
+Sistem, admin'in bütün siparişleri ve alt siparişleri görüntülemesini sağlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Admin her durumdaki bütün siparişleri en yeni en üstte görür. Sipariş numarasıyla arama ve duruma göre filtreleme yapabilir.
+  2. Detayda müşterinin adı ve e-posta adresi, alt siparişler, kalemler, teslimat adresi, KDV ve komisyon tutarları gösterilir.
+  3. Admin siparişin ve alt siparişlerin durumunu değiştiremez.
+  4. Var olmayan bir sipariş numarasıyla arama yapıldığında "Sipariş bulunamadı" mesajı gösterilir.
 
 ### 3.7 payment – Ödeme
 
