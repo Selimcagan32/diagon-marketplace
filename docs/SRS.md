@@ -65,6 +65,7 @@ Kullanıcı rolleri (misafir, müşteri, satıcı, admin) bölüm 2.2'de tanıml
 | Komisyon | Commission | Platformun her satıştan satıcıdan aldığı pay. |
 | Kullanılabilir stok | Available stock | Bir varyantın satın alınabilecek adedi. Hesaplanması FR-STOCK-02'de tanımlanır. |
 | Ödeme simülatörü | Payment simulator | Gerçek para hareketi olmadan, kart numarasına göre başarılı veya başarısız sonuç dönen ödeme sağlayıcısı. |
+| Satış sınırı | Purchase limit | Bir varyanttan tek bir siparişte alınabilecek en fazla adet. Satıcı belirler, FR-CATALOG-04'te tanımlanır. |
 | Satıştaki ürün | Listed product | Listelemede görünen ve satın alınabilen ürün. Koşulları FR-CATALOG-08'de tanımlanır. |
 | Sepet birleştirme | Cart merge | Misafirken oluşturulan sepetin, giriş yapıldığında kullanıcının hesabındaki sepetle tek sepette toplanması. |
 | Sipariş kalemi | Order item | Siparişteki tek bir varyant ve adedi. Sipariş anındaki fiyatı ve ürün bilgisini saklar. |
@@ -474,6 +475,7 @@ Sistem, satıcının kendi mağazasına ürün eklemesini ve ürünlerini düzen
   4. Ürünün kategorisi ürün eklendikten sonra değiştirilemez.
   5. Satıcı kendi ürününü satıştan kaldırabilir ve yeniden satışa açabilir.
   6. Satıcı başka bir satıcının ürününü düzenleyemez.
+  7. Satıcı, ürünün her varyantından tek bir siparişte en fazla kaç adet alınabileceğini (satış sınırı) belirler. Satış sınırı 1 ile 100 arasında bir tam sayıdır, girilmezse 10 olur. Bu aralığın dışındaki değer reddedilir.
 
 #### FR-CATALOG-05 Varyant yönetme
 
@@ -639,7 +641,90 @@ Sistem, aynı varyant için aynı anda gelen işlemlerde kullanılabilir stoktan
 
 ### 3.5 cart – Sepet
 
-_Henüz yazılmadı._
+Bu bölüm sepete ekleme, sepetin düzenlenmesi, misafir sepeti ve giriş yapınca sepetlerin birleşmesini kapsar. Sepete ürün eklemek stok ayırmaz, stok sipariş oluşturulunca ayrılır (bkz. FR-STOCK-03). Sepette gösterilen fiyat ürünün güncel fiyatıdır, fiyat sipariş anında sabitlenir (bkz. 3.6).
+
+#### FR-CART-01 Sepete ekleme
+
+Sistem, misafir, müşteri ve satıcının satıştaki bir ürünün varyantını sepete eklemesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Yalnızca satıştaki ürünlerin (bkz. FR-CATALOG-08) "Stokta" durumundaki varyantları sepete eklenebilir.
+  2. Sepette bulunan bir varyant tekrar eklenirse yeni kalem oluşmaz, mevcut kalemin adedi artar.
+  3. Bir varyantın sepetteki adedi ürünün satış sınırını (bkz. FR-CATALOG-04) aşamaz. Satış sınırı 3 olan bir varyanttan sepette 3 adet varken 1 adet daha eklenmek istenirse istek reddedilir ve kullanıcıya satış sınırı gösterilir.
+  4. Sepetteki adetle birlikte eklenmek istenen adet varyantın kullanılabilir stoğunu aşarsa istek reddedilir. Kullanıcıya stoğun yetersiz olduğu bildirilir, kullanılabilir adet gösterilmez.
+  5. Satıcı kendi mağazasının ürünlerini sepete ekleyemez.
+  6. Admin sepete ürün ekleyemez.
+
+#### FR-CART-02 Sepeti görüntüleme
+
+Sistem, misafir, müşteri ve satıcının kendi sepetini görüntülemesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Her kalemde ürünün ilk görseli, ürün adı, varyantın özellik değerleri, birim fiyat, adet ve kalem tutarı (birim fiyat × adet) gösterilir.
+  2. Kalemler mağazaya göre gruplanır ve her grubun başında mağaza adı gösterilir.
+  3. Sepetin toplam tutarı, siparişe dahil edilebilecek kalemlerin tutarlarının toplamıdır. Satın alınamayan kalemler (bkz. FR-CART-06) toplama katılmaz.
+  4. Fiyatlar varyantın güncel fiyatıdır. Sepete 100 TL iken eklenen bir varyantın fiyatı 120 TL'ye çıkarsa sepet 120 TL gösterir.
+  5. Kullanıcı veya misafir başka bir sepeti görüntüleyemez.
+
+#### FR-CART-03 Sepetteki kalemleri düzenleme
+
+Sistem, misafir, müşteri ve satıcının sepetindeki kalemlerin adedini değiştirmesini ve kalemleri silmesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Bir kalemin adedi 1 ile ürünün satış sınırı arasında bir tam sayı olabilir. Satış sınırı 3 olan bir varyantın adedi 4 yapılmak istenirse istek reddedilir.
+  2. Adet 1'in altına düşürülemez. Kalem sepetten silinerek çıkarılır.
+  3. Adet artırılırken kullanılabilir stok aşılırsa istek FR-CART-01'deki gibi reddedilir. Adet azaltılırken stok kontrolü yapılmaz.
+  4. Satın alınamayan kalemler de (bkz. FR-CART-06) silinebilir ve adetleri azaltılabilir.
+
+#### FR-CART-04 Misafir sepeti
+
+Sistem, misafirin giriş yapmadan sepet kullanmasını ve sepetinin belirli bir süre saklanmasını sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Misafirin sepeti, aynı cihaz ve tarayıcıdan siteye döndüğünde korunur.
+  2. Sepete ekleme, adet değiştirme ve kalem silme sepette değişiklik sayılır. Sepeti görüntülemek değişiklik sayılmaz.
+  3. Son değişikliğinden bu yana 30 gün geçen misafir sepeti, en geç 1 gün içinde silinir. 29. gününde değiştirilen sepetin süresi yeniden başlar.
+  4. Giriş yapmış kullanıcının sepeti süreyle silinmez.
+
+#### FR-CART-05 Sepet birleştirme
+
+Sistem, misafir giriş yaptığında misafir sepetini kullanıcının hesabındaki sepetle birleştirmelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Giriş yapıldığında misafir sepetindeki kalemler hesaptaki sepete eklenir ve misafir sepeti silinir. Kayıt olan kullanıcının misafir sepeti de aynı şekilde hesabına aktarılır.
+  2. Aynı varyant iki sepette de varsa adetler toplanır. Toplam satış sınırını aşarsa adet satış sınırına indirilir ve kullanıcıya bildirilir. Satış sınırı 3 olan bir varyanttan misafir sepetinde 2, hesaptaki sepette 2 adet varsa birleşen sepette 3 adet olur.
+  3. Birleştirmede stok ve satış durumu kontrol edilmez. Satın alınamayan kalemler FR-CART-06'daki gibi gösterilir.
+  4. Giriş yapan kullanıcı satıcıysa, misafir sepetindeki kendi mağazasının ürünleri hesaptaki sepete eklenmez ve kullanıcıya bildirilir.
+  5. Giriş yapan kullanıcı adminse misafir sepeti hesaba aktarılmaz.
+
+#### FR-CART-06 Satın alınamayan kalemler
+
+Sistem, sepetteki kalemlerin satın alınıp alınamayacağını güncel bilgilere göre belirlemeli ve satın alınamayan kalemleri işaretlemelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Kalemlerin durumu sepet her görüntülendiğinde güncel bilgilere göre belirlenir.
+  2. Satın alınamayan kalem şu uyarılardan biriyle gösterilir: ürünü satışta olmayan veya varyantı satıştan kaldırılmış kalem "Satışta değil", varyantı "Tükendi" durumundaki kalem (bkz. FR-STOCK-02) "Tükendi", sepetteki adedi varyantın kullanılabilir stoğundan fazla olan kalem "Stok yetersiz". Uyarılar bu sırayla kontrol edilir ve kalemde yalnızca ilk uyan uyarı gösterilir. "Stok yetersiz" uyarısında kullanılabilir adet gösterilmez.
+  3. Satın alınamayan kalemler sepetten kendiliğinden silinmez.
+  4. Sipariş yalnızca satın alınabilir kalemlerle oluşturulur, satın alınamayan kalemler sepette kalır. Sepette satın alınabilir kalem yoksa sipariş adımına geçilemez.
+  5. Kalemin koşulu düzelirse uyarı kalkar. "Tükendi" uyarılı bir kalem, satıcı stok ekledikten sonraki ilk görüntülemede uyarısız gösterilir.
+  6. Satıcı satış sınırını düşürürse, sınırı aşan kalemin adedi sepet görüntülendiğinde yeni sınıra indirilir ve kullanıcıya bildirilir. Bu kalem satın alınabilir kalır.
+
+#### FR-CART-07 Sipariş verilen kalemlerin sepetten çıkarılması
+
+Sistem, ödemesi başarılı olan siparişteki kalemleri sepetten çıkarmalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Ödeme başarılı olduğunda siparişteki varyantların kalemleri, sepetteki adetleri ne olursa olsun, sepetten çıkarılır.
+  2. Siparişe dahil edilmeyen satın alınamayan kalemler ve sipariş oluşturulduktan sonra sepete eklenen başka varyantlar sepette kalır.
+  3. Ödeme başarısız olursa veya sipariş herhangi bir sebeple iptal edilirse sepet değişmez.
+  4. Aynı siparişin başarılı ödeme sonucu ikinci kez işlenirse sepet ikinci kez değişmez.
 
 ### 3.6 order – Sipariş
 
