@@ -583,7 +583,7 @@ Sistem, admin'in her kategori için KDV oranını ve komisyon oranını belirlem
 
 ### 3.4 stock – Stok
 
-Bu bölüm varyant stoğunu ve sipariş sırasında stoğun ayrılmasını kapsar. Rezervasyonu sipariş başlatır (bkz. FR-ORDER-02), ödeme sonucu kesinleştirir veya serbest bırakır (bkz. 3.7). İade ile stoğun geri eklenmesi Faz 2'dedir.
+Bu bölüm varyant stoğunu ve sipariş sırasında stoğun ayrılmasını kapsar. Rezervasyonu sipariş başlatır (bkz. FR-ORDER-02), başarılı ödeme kesinleştirir (bkz. FR-PAYMENT-06), sipariş ödenmeden iptal edilirse serbest bırakılır (bkz. FR-ORDER-04 ve FR-ORDER-10). İade ile stoğun geri eklenmesi Faz 2'dedir.
 
 #### FR-STOCK-01 Stok miktarını güncelleme
 
@@ -636,7 +636,7 @@ Sistem, süresi dolan rezervasyonun ayrılmış stoğunu serbest bırakmalıdır
 - **Öncelik:** Çekirdek
 - **Kabul kriterleri:**
   1. Süresi dolan rezervasyonun ayrılmış adedi, süre dolduktan sonra en geç 1 dakika içinde serbest bırakılır ve kullanılabilir stok o kadar artar. Sipariş iptal edilir (bkz. FR-ORDER-10).
-  2. Başarısız ödeme rezervasyonu serbest bırakmaz. Müşteri süre dolana kadar aynı siparişi tekrar ödemeyi deneyebilir (bkz. 3.7).
+  2. Başarısız ödeme rezervasyonu serbest bırakmaz. Müşteri süre dolana kadar aynı siparişi tekrar ödemeyi deneyebilir (bkz. FR-PAYMENT-07).
   3. Süresi dolmuş bir siparişin ödemesi, stok henüz serbest bırakılmamış olsa bile alınmaz.
   4. Bir rezervasyon yalnızca bir kez serbest bırakılır. Serbest bırakılmış veya kesinleşmiş bir rezervasyon tekrar serbest bırakılmaz, stok iki kez geri eklenmez.
 
@@ -760,7 +760,7 @@ Sistem, müşteri ödeme adımında kart bilgilerini girip ödemeyi başlattığ
 
 - **Öncelik:** Çekirdek
 - **Kabul kriterleri:**
-  1. Sipariş, müşteri kart bilgilerini girip "Öde"ye bastığında oluşturulur, stok ayrılır (bkz. FR-STOCK-03) ve ödeme hemen başlar (bkz. 3.7). Yeni siparişin durumu "Ödeme bekleniyor"dur.
+  1. Sipariş, müşteri kart bilgilerini girip "Öde"ye bastığında oluşturulur, stok ayrılır (bkz. FR-STOCK-03) ve ödeme hemen başlar (bkz. FR-PAYMENT-01 ve FR-PAYMENT-02). Yeni siparişin durumu "Ödeme bekleniyor"dur.
   2. Her siparişe benzersiz bir sipariş numarası verilir. Müşteri, satıcı ve admin siparişi bu numarayla görür.
   3. Sipariş oluşturulmadan önce her kalemin fiyatı, satış durumu, stoğu (bkz. FR-CART-06) ve satış sınırı (bkz. FR-CATALOG-04) güncel bilgilere göre tekrar kontrol edilir. Bunlardan biri özette gösterilenden farklıysa sipariş oluşturulmaz, stok ayrılmaz ve müşteriye güncel bilgilerle yeni özet gösterilir.
   4. Özette 100 TL görünen bir varyantın fiyatı müşteri "Öde"ye basmadan 120 TL olursa sipariş oluşturulmaz ve yeni özette 120 TL gösterilir. Müşteri yeni özette "Öde"ye basarsa sipariş 120 TL ile oluşturulur.
@@ -788,7 +788,7 @@ Sistem, bir müşterinin aynı anda en fazla bir "Ödeme bekleniyor" durumunda s
   1. "Ödeme bekleniyor" durumunda siparişi olan müşteri sepetten yeni sipariş oluşturursa önceki sipariş "Yeni sipariş oluşturuldu" sebebiyle iptal edilir ve rezervasyonu serbest bırakılır (bkz. FR-STOCK-05).
   2. Önceki siparişten serbest bırakılan stok yeni sipariş için kullanılabilir. Son adedi önceki siparişte ayrıldığı için kullanılabilir stoğu 0 olan bir varyant, yeni siparişte tekrar alınabilir.
   3. Yeni sipariş oluşturulamazsa önceki sipariş iptal edilmez ve rezervasyonu korunur.
-  4. Müşteri yeni sipariş oluşturmak yerine önceki siparişi ödemeye devam edebilir. Bu durumda sipariş ve ödeme süresi değişmez (bkz. FR-ORDER-13 ve 3.7).
+  4. Müşteri yeni sipariş oluşturmak yerine önceki siparişi ödemeye devam edebilir. Bu durumda sipariş ve ödeme süresi değişmez (bkz. FR-ORDER-13 ve FR-PAYMENT-08).
   5. Aynı müşteriden farklı sekmelerden aynı anda gelen iki yeni sipariş isteğinden sonra müşterinin en fazla bir "Ödeme bekleniyor" durumunda siparişi olur.
 
 #### FR-ORDER-05 Sipariş sınırı
@@ -811,7 +811,7 @@ Sistem, siparişi kalemlerin ait olduğu mağazalara göre alt siparişlere böl
   1. Siparişteki her mağaza için bir alt sipariş oluşturulur. Her kalem kendi mağazasının alt siparişine aittir.
   2. A mağazasından 2, B mağazasından 1 varyant içeren sipariş 2 alt siparişe bölünür. Tek mağazadan verilen siparişin 1 alt siparişi olur.
   3. Alt siparişin tutarı kalemlerinin tutarlarının, siparişin toplam tutarı alt siparişlerin tutarlarının toplamıdır.
-  4. Sipariş, alt siparişlerin sayısından bağımsız olarak tek ödemeyle ödenir (bkz. 3.7).
+  4. Sipariş, alt siparişlerin sayısından bağımsız olarak tek ödemeyle ödenir (bkz. FR-PAYMENT-03).
 
 #### FR-ORDER-07 Sipariş anındaki bilgilerin saklanması
 
@@ -866,7 +866,7 @@ Sistem, alt siparişin durumunu yalnızca tanımlı geçişlerle değiştirmelid
 - **Kabul kriterleri:**
   1. Alt sipariş şu durumlardan birindedir: Ödeme bekleniyor, Ödendi, Hazırlanıyor, Kargoda, Teslim edildi, İptal edildi.
   2. Geçerli geçişler ve bunları yapan:
-     - Ödeme bekleniyor → Ödendi: ödeme başarılı olunca sistem (bkz. 3.7)
+     - Ödeme bekleniyor → Ödendi: ödeme başarılı olunca sistem (bkz. FR-PAYMENT-06)
      - Ödeme bekleniyor → İptal edildi: sistem (bkz. FR-ORDER-04 ve FR-ORDER-10)
      - Ödendi → Hazırlanıyor, Hazırlanıyor → Kargoda, Kargoda → Teslim edildi: satıcı (bkz. FR-ORDER-15)
   3. Bu geçişlerin dışındaki her değişiklik reddedilir ve durum değişmez. "Ödendi" durumundaki alt sipariş doğrudan "Kargoda" yapılamaz.
@@ -892,10 +892,11 @@ Sistem, müşteri ve satıcının kendi verdiği siparişleri listelemesini ve s
 - **Kabul kriterleri:**
   1. Siparişler en yeni en üstte olacak şekilde listelenir. Her siparişte sipariş numarası, sipariş tarihi, durum ve toplam tutar gösterilir. Sayfa başına 10 sipariş gösterilir.
   2. Detayda her alt sipariş mağaza adı ve durumuyla, kalemleri FR-ORDER-07'de saklanan bilgilerle gösterilir. Teslimat adresi, toplam tutar ve KDV tutarı da gösterilir.
-  3. "Ödeme bekleniyor" durumundaki siparişte kalan ödeme süresi ve ödemeye devam etme seçeneği gösterilir (bkz. 3.7).
+  3. "Ödeme bekleniyor" durumundaki siparişte kalan ödeme süresi ve ödemeye devam etme seçeneği gösterilir (bkz. FR-PAYMENT-08).
   4. İptal edilmiş siparişte iptal sebebi gösterilir.
   5. Kullanıcı başka bir kullanıcının siparişini görüntüleyemez.
   6. Satıcı burada yalnızca müşteri olarak verdiği siparişleri görür. Mağazasına gelen alt siparişler FR-ORDER-14'tedir.
+  7. Ödenmiş siparişin detayında ödeme tarihi, kart türü ve kartın son dört hanesi gösterilir (örneğin Visa **** 1111, bkz. FR-PAYMENT-10). FR-PAYMENT-10 ertelenirse bu bilgiler gösterilmez.
 
 #### FR-ORDER-14 Gelen alt siparişleri görüntüleme
 
@@ -930,10 +931,136 @@ Sistem, admin'in bütün siparişleri ve alt siparişleri görüntülemesini sa�
   2. Detayda müşterinin adı ve e-posta adresi, alt siparişler, kalemler, teslimat adresi, KDV ve komisyon tutarları gösterilir.
   3. Admin siparişin ve alt siparişlerin durumunu değiştiremez.
   4. Var olmayan bir sipariş numarasıyla arama yapıldığında "Sipariş bulunamadı" mesajı gösterilir.
+  5. Detayda siparişin bütün ödeme denemeleri tarih ve saat, tutar, sonuç, kart türü ve kartın son dört hanesiyle gösterilir (bkz. FR-PAYMENT-10). FR-PAYMENT-10 ertelenirse ödeme denemeleri gösterilmez.
 
 ### 3.7 payment – Ödeme
 
-_Henüz yazılmadı._
+Bu bölüm kart bilgilerinin alınmasını, ödemenin alınmasını, ödeme sonucunun siparişe yansımasını ve çift ödemenin önlenmesini kapsar. Ödeme, sipariş oluşturulduğu anda başlar (bkz. FR-ORDER-02). Faz 1'de ödemeler ödeme simülatörüyle alınır. Kart bilgilerinin korunması 4.2'dedir. Gerçek ödeme sağlayıcısı, 3D Secure, para iadesi ve süresi dolduktan sonra gelen ödemenin işlenmesi Faz 2'dedir.
+
+#### FR-PAYMENT-01 Kart bilgilerini girme
+
+Sistem, müşteri ve satıcının ödeme için kart bilgilerini girmesini ve bu bilgilerin biçimini kontrol etmesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Kart bilgileri kart üzerindeki ad, kart numarası, son kullanma tarihi (ay ve yıl) ve güvenlik kodundan oluşur. Hepsi zorunludur.
+  2. Kart üzerindeki ad 2–50 karakterdir. Güvenlik kodu 3 haneli bir sayıdır.
+  3. Kart numarası 16 haneden oluşur ve boşluklu veya boşluksuz girilebilir. Kontrol hanesi doğrulamasından (Luhn) geçmeyen numara reddedilir: 4111 1111 1111 1111 kabul edilir, 4111 1111 1111 1112 reddedilir.
+  4. Son kullanma tarihi içinde bulunulan aydan önceyse kart reddedilir. İçinde bulunulan ay kabul edilir: Kasım 2026'da 11/26 kabul edilir, 10/26 reddedilir.
+  5. Kart bilgilerinden biri geçersizse hatalı alan gösterilir ve ödeme denemesi yapılmaz. Ödeme adımındaysa sipariş oluşturulmaz ve stok ayrılmaz (bkz. FR-ORDER-02).
+
+#### FR-PAYMENT-02 Ödeme simülatörü
+
+Sistem, Faz 1'de ödemeyi gerçek para hareketi olmadan, sonucu kart numarasına göre belirleyen ödeme simülatörüyle almalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Ödemenin sonucu kart numarasına göre belirlenir:
+     - 4111 1111 1111 1111 (Visa): Başarılı
+     - 5555 5555 5555 4444 (Mastercard): Başarılı
+     - 9792 0303 9444 0796 (Troy): Başarılı
+     - 4000 0000 0000 9995 (Visa): Yetersiz bakiye
+     - 4000 0000 0000 0002 (Visa): Kart reddedildi
+     - 4000 0000 0000 0119 (Visa): İşlem hatası
+  2. FR-PAYMENT-01'e uyan ama bu listede olmayan bir kart numarası "Kart reddedildi" sonucunu alır.
+  3. Sonuç yalnızca kart numarasına bağlıdır. Kart üzerindeki ad, son kullanma tarihi ve güvenlik kodu geçerli olduğu sürece sonucu değiştirmez.
+  4. Ödeme sayfasında test kart numaraları ve sonuçları gösterilir. Hiçbir fazda gerçek ödeme alınmadığı için bu bilgi Faz 2'de de gösterilir, kartlar ödeme sağlayıcısının test kartlarıyla değiştirilir.
+
+#### FR-PAYMENT-03 Ödeme tutarı
+
+Sistem, siparişin toplam tutarını tek bir tahsilatla almalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Tahsil edilen tutar siparişin KDV dahil toplam tutarıdır (bkz. FR-ORDER-06).
+  2. Sipariş, alt siparişlerin sayısından bağımsız olarak tek tahsilatla ödenir. A mağazasından 150 TL, B mağazasından 50 TL'lik alt siparişi olan siparişte karttan bir kez 200 TL çekilir.
+  3. Tutar siparişte saklanan bilgilerden alınır (bkz. FR-ORDER-07). Sipariş oluşturulduktan sonra varyantın fiyatı değişse de tahsil edilen tutar değişmez.
+  4. Tutar yuvarlanmaz. 99,99 TL'lik sipariş için 99,99 TL tahsil edilir.
+
+#### FR-PAYMENT-04 Ödenebilir sipariş
+
+Sistem, yalnızca ödenebilir durumdaki bir siparişin ödemesini almalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Bir sipariş, "Ödeme bekleniyor" durumundaysa ve oluşturulmasından bu yana 15 dakika geçmemişse ödenebilir.
+  2. Ödemesi alınmış bir siparişin ödemesi reddedilir ve "Bu sipariş zaten ödendi" mesajı gösterilir.
+  3. İptal edilmiş bir siparişin ödemesi reddedilir ve iptal sebebi gösterilir.
+  4. Oluşturulmasından 15 dakika geçmiş sipariş, henüz iptal edilmemiş olsa bile ödenemez (bkz. FR-STOCK-05 ve FR-ORDER-10). Oluşturulmasından 14 dakika 59 saniye sonra başlatılan ödeme alınır, tam 15 dakika sonra başlatılan ödeme reddedilir.
+  5. Kullanıcı başka bir kullanıcının siparişini ödeyemez.
+  6. Reddedilen bir ödemede karttan para çekilmez.
+  7. Bir sipariş hiçbir koşulda hem ödenmiş hem iptal edilmiş olmaz. Ödeme süresi dolarken işlenen bir ödemede sipariş ya "Ödendi" ya "İptal edildi" durumuna geçer. İptal edilen siparişten tahsilat yapılmaz.
+
+#### FR-PAYMENT-05 Çift ödemenin önlenmesi
+
+Sistem, bir siparişin karttan birden fazla kez tahsil edilmesini engellemelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Müşteri "Öde"ye iki kez bastığında veya istek bağlantı hatası yüzünden tekrar gönderildiğinde karttan bir kez para çekilir. Tekrar gelen isteğe ilk denemenin sonucu döner.
+  2. Sipariş oluşturan ilk istek için FR-ORDER-03'teki tekrar kontrolü ödemeyi de kapsar: tekrar gelen istek yeni sipariş oluşturmaz ve kartı ikinci kez çekmez.
+  3. Tekrar kontrolü FR-PAYMENT-04'teki kontrollerden önce yapılır. Başarılı bir denemenin tekrarına "Bu sipariş zaten ödendi" hatası değil, ilk denemenin başarılı sonucu döner.
+  4. Başarısız bir denemeden sonra gönderilen ödeme yeni bir deneme sayılır.
+  5. Bir sipariş en fazla bir kez başarıyla ödenir. Aynı sipariş için farklı sekmelerden aynı anda gelen iki ödeme denemesinden en fazla biri tahsil edilir, diğeri reddedilir ve karttan para çekilmez.
+
+#### FR-PAYMENT-06 Başarılı ödemenin işlenmesi
+
+Sistem, ödemesi başarılı olan siparişi ödenmiş olarak işlemelidir.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Ödeme başarılı olduğunda siparişin bütün alt siparişleri "Ödendi" durumuna geçer (bkz. FR-ORDER-11), ayrılmış stok kesinleşir (bkz. FR-STOCK-04) ve siparişteki kalemler sepetten çıkarılır (bkz. FR-CART-07).
+  2. Bu değişikliklerden biri yapılıp diğeri yapılmamış halde kalmaz. "Ödendi" durumundaki bir siparişin stoğu ayrılmış durumda kalmaz.
+  3. Müşteriye sipariş onay sayfası gösterilir. Sayfada sipariş numarası, toplam tutar ve alt siparişlerin mağaza adları yer alır, sipariş detayına bağlantı verilir.
+  4. Ödenen siparişin alt siparişleri satıcıların gelen alt siparişler listesinde görünür (bkz. FR-ORDER-14).
+  5. Aynı siparişin başarılı ödeme sonucu ikinci kez işlenirse sipariş durumu, stok ve sepet ikinci kez değişmez.
+
+#### FR-PAYMENT-07 Başarısız ödemenin işlenmesi
+
+Sistem, ödemesi başarısız olan siparişi ödeme süresi dolana kadar ödenebilir durumda tutmalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Ödeme başarısız olduğunda sipariş "Ödeme bekleniyor" durumunda kalır, ayrılmış stok korunur (bkz. FR-STOCK-05) ve sepet değişmez (bkz. FR-CART-07).
+  2. Müşteriye başarısızlığın sebebi gösterilir: "Yetersiz bakiye", "Kart reddedildi" veya "Ödeme sırasında bir hata oluştu".
+  3. Müşteri ödeme süresi dolana kadar aynı siparişi aynı veya başka bir kartla tekrar ödeyebilir.
+  4. Başarısız ödeme ödeme süresini yeniden başlatmaz. Oluşturulmasının 5. dakikasında ödemesi başarısız olan sipariş, oluşturulmasından 15 dakika sonrasına kadar ödenebilir.
+  5. Başarısız ödeme, FR-ORDER-05'teki sipariş sınırına sayılmaz.
+
+#### FR-PAYMENT-08 Ödemeye devam etme
+
+Sistem, müşterinin "Ödeme bekleniyor" durumundaki siparişini sipariş detayından ödemesini sağlamalıdır.
+
+- **Öncelik:** Çekirdek
+- **Kabul kriterleri:**
+  1. Müşteri sipariş detayındaki ödemeye devam etme seçeneğiyle (bkz. FR-ORDER-13) ödeme sayfasını açar.
+  2. Ödeme sayfasında sipariş numarası, kalan ödeme süresi, siparişte saklanan kalemler ve toplam tutar gösterilir.
+  3. Fiyat, satış durumu ve stok tekrar kontrol edilmez. Sipariş oluşturulduğu andaki tutar tahsil edilir (bkz. FR-PAYMENT-03).
+  4. Teslimat adresi değiştirilemez. Farklı adres isteyen müşteri sepetten yeni sipariş oluşturur, önceki sipariş FR-ORDER-04'teki kurala göre iptal edilir.
+  5. Ödeme sayfası açıkken ödeme süresi dolarsa ödeme FR-PAYMENT-04'teki gibi reddedilir ve müşteriye ödeme süresinin dolduğu gösterilir.
+
+#### FR-PAYMENT-09 Ödeme denemesi sınırı
+
+Sistem, bir sipariş için yapılabilecek başarısız ödeme denemesi sayısını sınırlamalıdır.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Bir sipariş için en fazla 5 başarısız ödeme denemesi yapılabilir. 5 başarısız denemesi olan siparişin sonraki ödeme denemesi reddedilir, karttan para çekilmez ve müşteriye sepetten yeni sipariş oluşturabileceği gösterilir.
+  2. 4 başarısız denemesi olan siparişin 5. denemesi yapılır. Bu deneme başarılı olursa sipariş ödenir.
+  3. Kart bilgileri geçersiz olduğu için yapılmayan denemeler (bkz. FR-PAYMENT-01) sayılmaz.
+  4. Tekrar gönderilen aynı deneme (bkz. FR-PAYMENT-05) bir deneme sayılır.
+  5. Sınıra ulaşan sipariş hemen iptal edilmez, ödeme süresi dolunca FR-ORDER-10'daki gibi iptal edilir.
+
+#### FR-PAYMENT-10 Ödeme kayıtları
+
+Sistem, her ödeme denemesini sonucuyla birlikte kaydetmelidir.
+
+- **Öncelik:** Ertelenebilir
+- **Kabul kriterleri:**
+  1. Her denemede sipariş numarası, tarih ve saat, tutar, sonuç, kart türü ve kart numarasının son dört hanesi kaydedilir.
+  2. Kart türü kart numarasından belirlenir: Visa, Mastercard veya Troy. Bu türlerden birine uymayan kartın türü "Diğer" olarak kaydedilir. 4111 1111 1111 1111 numaralı kartın türü Visa olarak kaydedilir.
+  3. Kart numarasının tamamı, son kullanma tarihi ve güvenlik kodu kaydedilmez (bkz. NFR-SEC).
+  4. Ödeme kayıtları sonradan değiştirilmez ve silinmez. Sipariş iptal edilse de denemelerin kayıtları kalır.
 
 ### 3.8 admin – Yönetim
 
