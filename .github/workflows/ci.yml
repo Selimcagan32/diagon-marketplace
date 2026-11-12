@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend derleme ve test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: diagon
+          POSTGRES_USER: diagon
+          POSTGRES_PASSWORD: diagon_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U diagon -d diagon"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_DB: diagon
+      POSTGRES_USER: diagon
+      POSTGRES_PASSWORD: diagon_ci
+
+    steps:
+      - name: Kodu indir
+        uses: actions/checkout@v5
+
+      - name: Java 21 kur
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Derle ve test et
+        run: chmod +x mvnw && ./mvnw -B verify
