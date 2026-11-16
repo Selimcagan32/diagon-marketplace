@@ -20,13 +20,20 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
 
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {
+        return realmRoles(jwt).stream()
+                .map(role -> ROLE_PREFIX + role.toUpperCase(Locale.ROOT))
+                .<GrantedAuthority>map(SimpleGrantedAuthority::new)
+                .toList();
+    }
+
+    /** Token'daki realm rollerini Keycloak'taki adlarıyla döndürür (örneğin "admin"). */
+    public static List<String> realmRoles(Jwt jwt) {
         Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
         if (realmAccess == null || !(realmAccess.get("roles") instanceof Collection<?> roles)) {
             return List.of();
         }
         return roles.stream()
-                .map(role -> ROLE_PREFIX + role.toString().toUpperCase(Locale.ROOT))
-                .<GrantedAuthority>map(SimpleGrantedAuthority::new)
+                .map(Object::toString)
                 .toList();
     }
 }
