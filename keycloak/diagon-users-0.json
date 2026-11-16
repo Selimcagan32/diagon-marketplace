@@ -1,0 +1,25 @@
+{
+  "realm": "diagon",
+  "users": [
+    {
+      "username": "admin@diagon.dev",
+      "email": "admin@diagon.dev",
+      "firstName": "Diagon",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${DIAGON_ADMIN_PASSWORD}", "temporary": false }],
+      "realmRoles": ["default-roles-diagon", "admin"]
+    },
+    {
+      "username": "musteri@diagon.dev",
+      "email": "musteri@diagon.dev",
+      "firstName": "Deneme",
+      "lastName": "Müşteri",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "Musteri1234", "temporary": false }],
+      "realmRoles": ["default-roles-diagon"]
+    }
+  ]
+}
